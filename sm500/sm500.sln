@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{2857B73E-F847-4B02-9238-064979017E93}") = "test_libCsm500Dev", "test_libCsm500Dev\test_libCsm500Dev.cproj", "{F0C29A7E-F966-429C-886C-4296C99FDC98}"
+EndProject
+Project("{2857B73E-F847-4B02-9238-064979017E93}") = "sm500_driver", "sm500_driver\sm500_driver.cproj", "{CF4F9864-9C6D-4D7F-8C30-71504074637D}"
+EndProject
+Project("{2857B73E-F847-4B02-9238-064979017E93}") = "libCsm500Dev", "libCsm500Dev\libCsm500Dev.cproj", "{0FB1E388-5FD7-478B-8203-A7EB933D918E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0FB1E388-5FD7-478B-8203-A7EB933D918E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0FB1E388-5FD7-478B-8203-A7EB933D918E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0FB1E388-5FD7-478B-8203-A7EB933D918E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0FB1E388-5FD7-478B-8203-A7EB933D918E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF4F9864-9C6D-4D7F-8C30-71504074637D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF4F9864-9C6D-4D7F-8C30-71504074637D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF4F9864-9C6D-4D7F-8C30-71504074637D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF4F9864-9C6D-4D7F-8C30-71504074637D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F0C29A7E-F966-429C-886C-4296C99FDC98}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F0C29A7E-F966-429C-886C-4296C99FDC98}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F0C29A7E-F966-429C-886C-4296C99FDC98}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F0C29A7E-F966-429C-886C-4296C99FDC98}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = test_libCsm500Dev\test_libCsm500Dev.cproj
+	EndGlobalSection
+EndGlobal
