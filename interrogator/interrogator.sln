@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "device", "device\device.csproj", "{9162D414-B022-4555-BB5E-8334691D615F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "server", "server\server.csproj", "{DC47A850-CD23-4E77-A09B-F35A4EB53593}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -13,12 +15,17 @@ Global
 		{9162D414-B022-4555-BB5E-8334691D615F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9162D414-B022-4555-BB5E-8334691D615F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9162D414-B022-4555-BB5E-8334691D615F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DC47A850-CD23-4E77-A09B-F35A4EB53593}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC47A850-CD23-4E77-A09B-F35A4EB53593}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DC47A850-CD23-4E77-A09B-F35A4EB53593}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DC47A850-CD23-4E77-A09B-F35A4EB53593}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
-		StartupItem = device\device.csproj
+		StartupItem = server\server.csproj
 		Policies = $0
 		$0.TextStylePolicy = $1
-		$1.inheritsSet = null
+		$1.inheritsSet = Mono
+		$1.inheritsScope = text/plain
 		$1.scope = text/x-csharp
 		$0.CSharpFormattingPolicy = $2
 		$2.IndentSwitchBody = True

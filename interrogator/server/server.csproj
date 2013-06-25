@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>10.0.0</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{9162D414-B022-4555-BB5E-8334691D615F}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <RootNamespace>MicronOptics.Hyperion.Interrogator.Device</RootNamespace>
-    <AssemblyName>device</AssemblyName>
-    <Description>Contains classes for interacting with the underlying optical interrogation device.</Description>
+    <ProjectGuid>{DC47A850-CD23-4E77-A09B-F35A4EB53593}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>MicronOptics.Hyperion.Interrogator.Server</RootNamespace>
+    <AssemblyName>server</AssemblyName>
+    <StartupObject>MicronOptics.Hyperion.Interrogator.Server.MainClass</StartupObject>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -19,7 +19,7 @@
     <DefineConstants>DEBUG;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <ConsolePause>false</ConsolePause>
+    <Externalconsole>true</Externalconsole>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -27,17 +27,25 @@
     <OutputPath>bin\Release</OutputPath>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <ConsolePause>false</ConsolePause>
+    <Externalconsole>true</Externalconsole>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="Mono.Posix" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="DeviceControl.cs" />
-    <Compile Include="HardwareDevice.cs" />
+    <Compile Include="CommandManager.cs" />
+    <Compile Include="EnlightCommand.cs" />
+    <Compile Include="_Enum.cs" />
+    <Compile Include="MoiException.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <ProjectReference Include="..\device\device.csproj">
+      <Project>{9162D414-B022-4555-BB5E-8334691D615F}</Project>
+      <Name>device</Name>
+    </ProjectReference>
+  </ItemGroup>
 </Project>
