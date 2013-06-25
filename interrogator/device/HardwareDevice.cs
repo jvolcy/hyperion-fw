@@ -2,7 +2,6 @@ using System;
 using System.Runtime.InteropServices;
 using Mono.Unix.Native;
 
-
 namespace MicronOptics.Hyperion.Interrogator.Device
 {
 	public unsafe class HardwareDevice
@@ -10,6 +9,7 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 		#region -- Constants --
 
 		private const string _DevicePath = @"/dev/sm500";
+
 		/// <summary>
 		/// The IoctlCommand class contains the valid device driver ioctl command codes that are
 		/// supported by the hyperion interrogator.
@@ -67,7 +67,7 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 			/// Using the C wrapper, initialize the IOCTL command codes to the values that the device
 			/// driver is expecting.
 			/// </summary>
-			static IoctlRequestCodes ()
+			static IoctlRequestCodes()
 			{
 				// Driver Version
 				GetDriverVersion = BuildIoctlRequestCode(
@@ -200,7 +200,7 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 			int fileDescriptor = Syscall.open( _DevicePath, OpenFlags.O_RDWR );
 
 			// Open Device File
-			if ( _FileDescriptor < 0 )
+			if( _FileDescriptor < 0 )
 			{
 				throw new Exception(
 					"Error opening the device: " +
@@ -224,7 +224,7 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 			// Memory Map Peak Buffers to virtual memory for this process
 			SetMMapIndex( MMapDmaBufferOffset.Peak );
 
-			for ( int index=0; index<peakDmaBufferCount; index++ )
+			for( int index=0; index<peakDmaBufferCount; index++ )
 			{
 				_PeakDataBuffers[ index ] = (byte*) Syscall.mmap(
 					IntPtr.Zero, 
@@ -235,7 +235,7 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 					0 );
 
 				// Check for Error
-				if ( (IntPtr) _PeakDataBuffers[ index ] == Syscall.MAP_FAILED )
+				if( (IntPtr) _PeakDataBuffers[ index ] == Syscall.MAP_FAILED )
 				{
 					throw new Exception(
 						"Error creating peak data memory map: " +
@@ -253,7 +253,7 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 			// Memory Map Full Spectrum Buffers to virtual memory for this process
 			SetMMapIndex( MMapDmaBufferOffset.Spectrum );
 
-			for ( int index=0; index<spectrumDmaBufferCount; index++ )
+			for( int index=0; index<spectrumDmaBufferCount; index++ )
 			{
 				_SpectrumDataBuffers[ index ] = (byte*) Syscall.mmap(
 					IntPtr.Zero, 
@@ -264,7 +264,7 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 					0 );
 
 				// Check for Error
-				if ( (IntPtr) _SpectrumDataBuffers[ index ] == Syscall.MAP_FAILED )
+				if( (IntPtr) _SpectrumDataBuffers[ index ] == Syscall.MAP_FAILED )
 				{
 					throw new Exception(
 						"Error creating full spectrum memory map: " +
@@ -278,7 +278,7 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 		/// <param name="index">Index.</param>
 		private void SetMMapIndex( uint index )
 		{
-			if ( IOCTL_IN( _FileDescriptor, IoctlRequestCodes.SetMMapIndex, index ) < 0 )
+			if( IOCTL_IN( _FileDescriptor, IoctlRequestCodes.SetMMapIndex, index ) < 0 )
 			{
 				throw new Exception(
 					"Error setting mmap index: " +
@@ -300,7 +300,7 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 			// and returns the value in the upper 32-bits.
 			ulong ioctlRegisterData = address;
 
-			if ( IOCTL( _FileDescriptor, IoctlRequestCodes.ReadRegister32, &ioctlRegisterData ) < 0 )
+			if( IOCTL( _FileDescriptor, IoctlRequestCodes.ReadRegister32, &ioctlRegisterData ) < 0 )
 			{
 				throw new Exception(
 					"Error reading from device register: " +
@@ -322,7 +322,7 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 			// and returns the value in the upper 32-bits.
 			ulong ioctlRegisterData = ( (ulong) value << 32 ) + address;
 
-			if ( IOCTL( _FileDescriptor, IoctlRequestCodes.WriteRegister32, &ioctlRegisterData ) < 0 )
+			if( IOCTL( _FileDescriptor, IoctlRequestCodes.WriteRegister32, &ioctlRegisterData ) < 0 )
 			{
 				throw new Exception(
 					"Error writing to device register: " +
@@ -341,7 +341,7 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 			// was most recently refreshed by the device hardware.
 			uint index;
 
-			if ( IOCTL( _FileDescriptor, IoctlRequestCodes.GetPeakBufferIndex, &index ) < 0 )
+			if( IOCTL( _FileDescriptor, IoctlRequestCodes.GetPeakBufferIndex, &index ) < 0 )
 			{
 				throw new Exception(
 					"Error retrieving next peak buffer: " +
@@ -364,7 +364,7 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 			// was most recently refreshed by the device hardware.
 			uint index;
 
-			if ( IOCTL( _FileDescriptor, IoctlRequestCodes.GetSpectrumBufferIndex, &index ) < 0 )
+			if( IOCTL( _FileDescriptor, IoctlRequestCodes.GetSpectrumBufferIndex, &index ) < 0 )
 			{
 				throw new Exception(
 					"Error retrieving next spectrum buffer: " +
@@ -384,7 +384,7 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 			uint version;
 
 			// Driver Version
-			if ( IOCTL( _FileDescriptor, IoctlRequestCodes.GetDriverVersion, &version ) < 0 )
+			if( IOCTL( _FileDescriptor, IoctlRequestCodes.GetDriverVersion, &version ) < 0 )
 			{
 				throw new Exception(
 					"Error retrieving device driver version: " +
@@ -411,12 +411,13 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 				DeviceDmaModes.Off );
 
 			// Close
-			if ( Syscall.close( _FileDescriptor ) < 0 )
+			if( Syscall.close( _FileDescriptor ) < 0 )
 			{
 				// Error Closing
 				Console.WriteLine( "Close Error: " + Stdlib.GetLastError() );
 			}
 		}
 		#endregion
-	}}
+	}
+}
 

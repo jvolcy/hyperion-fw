@@ -16,7 +16,8 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 		public const uint PeakDmaBufferSizeInBytes = 0x0034;
 		public const uint SystemConfiguration = 0x0080;
 		public const uint InterruptEnable = 0x0100;
-	};
+	}
+
 	/// <summary>
 	/// The DmaModes control which data types are transferred from the device
 	/// into the PC using Direct Memory Access (DMA) transfer.
@@ -27,6 +28,7 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 		public const uint Peak = 0x2;
 		public const uint Spectrum = 0x4;
 	}
+
 	/// <summary>
 	/// The InterruptModes control which data types in the device signal the PC
 	/// when new data is available.
