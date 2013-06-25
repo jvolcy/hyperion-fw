@@ -24,10 +24,10 @@ int main(int argc, char **argv)
   /* Test GetPeaksData() */  
   
   const uint32_t *peaks_data;  
-  for (int i=0; i<10; i++)  // 10 acquistion = timestamp should increment by 0.01 second & expect to see ~ 10 interrupts
+  for (int i=0; i<8; i++)  // 10 acquistion = timestamp should increment by 0.01 second & expect to see ~ 10 interrupts
   {
     peaks_data = (const uint32_t*)sm500.GetPeaksData();
-    for (int j=0; j<10; j++)
+    for (int j=0; j<8; j++)
       cout<<hex<<"Peaks["<<i<<"]["<<j<<"] = "<<peaks_data[j]<<"\n";
   }
 
