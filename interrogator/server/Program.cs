@@ -218,7 +218,7 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 					_Device.GetNexSpectrumDataBuffer(),		// Source -- Shared device memory
 					_RawSpectrumData,				// Destination -- response
 					0,						// Offset into source
-					(int) _Device.PeakDmaBufferSizeInBytes );	// Number of 
+					(int) _Device.SpectrumDmaBufferSizeInBytes );	// Number of 
 
 				// Point the response at the copied data
 				responseBytes = _RawSpectrumData; 

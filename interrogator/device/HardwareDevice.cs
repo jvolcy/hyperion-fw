@@ -322,7 +322,7 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 			// Memory Map Full Spectrum Buffers to virtual memory for this process
 			SetMMapIndex( MMapDmaBufferOffset.Spectrum );
 
-			for( uint index=0; index<SpectrumDmaBufferCount; index++ )
+			for( uint index = 0; index < SpectrumDmaBufferCount; index++ )
 			{
 				// Use Linux MMap to map kernel memory to in-process memory addresses
 				_SpectrumDataBuffers[ index ] = Syscall.mmap(
