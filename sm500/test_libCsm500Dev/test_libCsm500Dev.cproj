@@ -11,6 +11,11 @@
     <Compiler>
       <Compiler ctype="GppCompiler" />
     </Compiler>
+    <Packages>
+      <Packages>
+        <Package file="/home/test/moi/hyperion-fw/sm500/libCsm500Dev/libCsm500Dev.md.pc" name="libCsm500Dev" IsProject="true" />
+      </Packages>
+    </Packages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -26,11 +31,6 @@
         <Include>/home/jerry/work/program/sm500/sm500_driver</Include>
       </Includes>
     </Includes>
-    <Libs>
-      <Libs>
-        <Lib>/home/jerry/work/program/sm500/libCsm500Dev/bin/Debug/libCsm500Dev.so</Lib>
-      </Libs>
-    </Libs>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release</OutputPath>
