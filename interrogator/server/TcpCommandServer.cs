@@ -546,7 +546,7 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 		/// Remove a command.
 		/// </summary>
 		/// <param name="commandText">The name of the command (ie #IDN).</param>
-		public void RemoveCommandHandler( string commandText )
+		public void RemoveCommand( string commandText )
 		{
 			_serverCommands.Remove( commandText.ToUpper() );
 		}

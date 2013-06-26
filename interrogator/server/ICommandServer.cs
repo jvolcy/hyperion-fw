@@ -11,8 +11,7 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 
 		void AddCommand( string name, string description, bool passwordRequired, bool hideHelpText,
 			ServerCommandDelegate command );
-		void RemoveCommandHandler( string commandText );
-
+		void RemoveCommand( string commandText );
 	}
 }
 

@@ -36,8 +36,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="DeviceControl.cs" />
-    <Compile Include="HardwareDevice.cs" />
+    <Compile Include="HyperionDevice.cs" />
+    <Compile Include="IDeviceInterface.cs" />
+    <Compile Include="HardwareInterface.cs" />
+    <Compile Include="_Enum.cs" />
+    <Compile Include="_Constants.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

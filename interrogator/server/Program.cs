@@ -1,94 +1,82 @@
 using System;
 using System.Text;
 using System.Runtime.InteropServices;
+
 using MicronOptics.Hyperion.Interrogator.Device;
 
 namespace MicronOptics.Hyperion.Interrogator.Server
 {
 	class MainClass
 	{
-		private static HardwareDevice _Device = null;
-
-		private static byte[] _RawPeakData;
-		private static byte[] _RawSpectrumData;
+		private static HyperionDevice _Device = null;
 
 		public static void Main( string[] args )
 		{
-			#region -- Create and Initialize Device --
-
 			// A HardwareDevice provides communication to the device FPGA
 			// through a kernel device driver.
-			_Device = HardwareDevice.Create();
+			using( _Device = new HyperionDevice( HardwareInterface.Create() ) )
+			{
+				#region -- Create and Initialize Command Manager --
 
-			// The device hardware (FPGA) specifies to the device driver the size and number of peak/spectrum
-			// DMA buffers. The size of the DMA buffers is needed to allocate the managed memory for returning
-			// in response to GetRawPeakData/GetRawSpectrumData commads.
-			_RawPeakData = new byte[ _Device.PeakDmaBufferSizeInBytes ];
-			_RawSpectrumData = new byte[ _Device.SpectrumDmaBufferSizeInBytes ];
+				// Create a new command manager to receive and process incoming requests.
+				TcpCommandServer commandManager = TcpCommandServer.GetInstance();
 
-			#endregion
+				commandManager.AddCommand( 
+					"#ReadRegister",
+					"Read the specified device register address.",
+					false,
+					false,
+					new ServerCommandDelegate( ReadRegister ) );
 
-			#region -- Create and Initialize Command Manager --
+				commandManager.AddCommand( 
+					"#WriteRegister",
+					"Write value to the specified device register address.",
+					false,
+					false,
+					new ServerCommandDelegate( WriteRegister ) );
 
-			// Create a new command manager to receive and process incoming requests.
-			TcpCommandServer commandManager = TcpCommandServer.GetInstance();
+				commandManager.AddCommand( 
+					"#GetRawPeaks",
+					"Get the raw (as transferred from the FPGA) peak data.",
+					false,
+					false,
+					new ServerCommandDelegate( GetRawPeaks ) );
 
-			commandManager.AddCommand( 
-			                   "#ReadRegister",
-			                   "Read the specified device register address.",
-			                   false,
-			                   false,
-			                   new ServerCommandDelegate( ReadRegister ) );
+				commandManager.AddCommand( 
+					"#GetRawSpectra",
+					"Get the raw (as transferred from the FPGA) reflected optical spectrum data.",
+					false,
+					false,
+					new ServerCommandDelegate( GetRawSpectra ) );
 
-			commandManager.AddCommand( 
-			                   "#WriteRegister",
-			                   "Write value to the specified device register address.",
-			                   false,
-			                   false,
-			                   new ServerCommandDelegate( WriteRegister ) );
+				// Recieve and process incoming commands
+				commandManager.Start();
 
-			commandManager.AddCommand( 
-			                   "#GetRawPeaks",
-			                   "Get the raw (as transferred from the FPGA) peak data.",
-			                   false,
-			                   false,
-			                   new ServerCommandDelegate( GetRawPeaks ) );
+				#endregion
 
-			commandManager.AddCommand( 
-			                   "#GetRawSpectra",
-			                   "Get the raw (as transferred from the FPGA) reflected optical spectrum data.",
-			                   false,
-			                   false,
-			                   new ServerCommandDelegate( GetRawSpectra ) );
+				#region -- Display FPGA and Driver Info --
 
-			// Recieve and process incoming commands
-			commandManager.Start();
+				// Provide an easy sign that the communication with the device
+				// is functioning
+				Console.WriteLine( string.Format( "  FPGA Version: {0}",
+				ASCIIEncoding.ASCII.GetString( BitConverter.GetBytes( _Device.GetFpgaVersion() ) ) ) );
 
-			#endregion
+				// Provide an easy sign that the communication with the device
+				// is functioning
+				Console.WriteLine( string.Format( "Driver Version: {0}",
+				_Device.GetDeviceDriverVersion() ) );
 
-			#region -- Display FPGA and Driver Info --
+				Console.WriteLine( "----------------------" );
 
-			// Provide an easy sign that the communication with the device
-			// is functioning
-			Console.WriteLine( string.Format( "  FPGA Version: {0}",
-				ASCIIEncoding.ASCII.GetString( BitConverter.GetBytes( _Device.ReadRegister( DeviceRegisterAddress.FpgaVersion ) ) ) ) );
+				#endregion
 
-			// Provide an easy sign that the communication with the device
-			// is functioning
-			Console.WriteLine( string.Format( "Driver Version: {0}",
-				_Device.GetDriverVersion() ) );
+				// Wait for user input to exit gracefully 
+				Console.ReadLine();
 
-			Console.WriteLine( "----------------------" );
-
-			#endregion
-
-			// Wait for user input to exit gracefully 
-			Console.ReadLine();
-
-			// Before exiting, propertly shutdown the device to allow for easy
-			// start and stop debugging (no reboot ).
-			commandManager.Stop();
-			_Device.Close();
+				// Before exiting, propertly shutdown the device to allow for easy
+				// start and stop debugging (no reboot ).
+				commandManager.Stop();
+			}
 		}
 
 		/// <summary>
@@ -177,15 +165,8 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 		{
 			try
 			{
-				// Copy the raw peak data from the mapped device memory and return to the caller.
-				Marshal.Copy(
-					_Device.GetNextPeakDataBuffer(),		// Source -- Shared device memory
-				        _RawPeakData,					// Destination -- response
-					0,						// Offset into source
-				        (int) _Device.PeakDmaBufferSizeInBytes );	// Number of bytes
-
 				// Point the response at the copied data
-				responseBytes = _RawPeakData; 
+				responseBytes = _Device.GetRawPeakData();; 
 
 				// Wahoo...it freaking worked...
 				return CommandExitStatus.Success;
@@ -209,15 +190,8 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 		{
 			try
 			{
-				// Copy the raw spectrum data from the mapped device memory and return to the caller.
-				Marshal.Copy(
-					_Device.GetNexSpectrumDataBuffer(),		// Source -- Shared device memory
-					_RawSpectrumData,				// Destination -- response
-					0,						// Offset into source
-					(int) _Device.SpectrumDmaBufferSizeInBytes );	// Number of bytes
-
 				// Point the response at the copied data
-				responseBytes = _RawSpectrumData; 
+				responseBytes = _Device.GetRawSpectrumData(); 
 
 				// Wahoo...it freaking worked...
 				return CommandExitStatus.Success;
