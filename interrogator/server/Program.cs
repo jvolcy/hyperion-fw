@@ -8,13 +8,13 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 {
 	class MainClass
 	{
-		private static HyperionDevice _Device = null;
+		private static HyperionDevice _hyperion = null;
 
 		public static void Main( string[] args )
 		{
 			// A HardwareDevice provides communication to the device FPGA
 			// through a kernel device driver.
-			using( _Device = new HyperionDevice( HardwareInterface.Create() ) )
+			using( _hyperion = new HyperionDevice( HardwareInterface.Create() ) )
 			{
 				#region -- Create and Initialize Command Manager --
 
@@ -59,12 +59,12 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 				// Provide an easy sign that the communication with the device
 				// is functioning
 				Console.WriteLine( string.Format( "  FPGA Version: {0}",
-				ASCIIEncoding.ASCII.GetString( BitConverter.GetBytes( _Device.GetFpgaVersion() ) ) ) );
+				ASCIIEncoding.ASCII.GetString( BitConverter.GetBytes( _hyperion.GetFpgaVersion() ) ) ) );
 
 				// Provide an easy sign that the communication with the device
 				// is functioning
 				Console.WriteLine( string.Format( "Driver Version: {0}",
-				_Device.GetDeviceDriverVersion() ) );
+				_hyperion.GetDeviceDriverVersion() ) );
 
 				Console.WriteLine( "----------------------" );
 
@@ -101,7 +101,7 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 			try
 			{
 				// Read from device
-				uint val = _Device.ReadRegister(
+				uint val = _hyperion.ReadRegister(
 					GetDecimalOrHexidecimalValueFromString( commandFields[ 1 ] ) );
 
 				// Display
@@ -133,7 +133,7 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 			try
 			{
 				// Write to device
-				_Device.WriteRegister(
+				_hyperion.WriteRegister(
 					GetDecimalOrHexidecimalValueFromString( commandFields[ 1 ] ),
 					GetDecimalOrHexidecimalValueFromString( commandFields[ 2 ] ) );
 
@@ -166,7 +166,7 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 			try
 			{
 				// Point the response at the copied data
-				responseBytes = _Device.GetRawPeakData();; 
+				responseBytes = _hyperion.GetRawPeakData();; 
 
 				// Wahoo...it freaking worked...
 				return CommandExitStatus.Success;
@@ -191,7 +191,7 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 			try
 			{
 				// Point the response at the copied data
-				responseBytes = _Device.GetRawSpectrumData(); 
+				responseBytes = _hyperion.GetRawSpectrumData(); 
 
 				// Wahoo...it freaking worked...
 				return CommandExitStatus.Success;

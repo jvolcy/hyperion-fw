@@ -24,22 +24,9 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 
 		#region -- Constructors --
 
-		public HyperionDevice( IDeviceInterface deviceInterface )
+		private HyperionDevice( IDeviceInterface deviceInterface )
 		{
 			_deviceInterface = deviceInterface;
-
-			// Map device memory into the process virtual memory for peak/spectrum data.
-			InitializeDataBuffers();
-
-			// The device hardware (FPGA) specifies to the device driver the size and number of peak/spectrum
-			// DMA buffers. The size of the DMA buffers is needed to allocate the managed memory for returning
-			// in response to GetRawPeakData/GetRawSpectrumData commads.
-			_rawPeakData = new byte[ PeakDmaBufferSizeInBytes ];
-			_rawSpectrumData = new byte[ SpectrumDmaBufferSizeInBytes ];
-
-			// Enable Data Acquisition from the device
-			ConfigureInterrupts( Interrupts.All );
-			ConfigureDMA( DmaModes.All );
 		}
 
 		#endregion
@@ -51,7 +38,7 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 		/// Gets the raw peak data dma buffer size in bytes (specified by the hardware/FPGA).
 		/// </summary>
 		/// <value>The raw peak data dma buffer size in bytes.</value>
-		public uint PeakDmaBufferSizeInBytes
+		public int PeakDmaBufferSizeInBytes
 		{
 			get;
 			private set;
@@ -61,7 +48,7 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 		/// Gets the raw peak data dma buffer count (specified by the hardware/FPGA).
 		/// </summary>
 		/// <value>The raw peak data dma buffer count.</value>
-		public uint PeakDmaBufferCount
+		public int PeakDmaBufferCount
 		{
 			get;
 			private set;
@@ -71,7 +58,7 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 		/// Gets the raw spectrum data dma buffer size in bytes (specified by the hardware/FPGA).
 		/// </summary>
 		/// <value>The raw spectrum data dma buffer size in bytes.</value>
-		public uint SpectrumDmaBufferSizeInBytes
+		public int SpectrumDmaBufferSizeInBytes
 		{
 			get;
 			private set;
@@ -81,7 +68,7 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 		/// Gets the raw spectrum data dma buffer count (specified by the hardware/FPGA).
 		/// </summary>
 		/// <value>The raw spectrum data dma buffer count.</value>
-		public uint SpectrumDmaBufferCount
+		public int SpectrumDmaBufferCount
 		{
 			get;
 			private set;
@@ -89,6 +76,24 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 
 		#endregion
 
+
+		#region -- Static Methods --
+
+		public static HyperionDevice Create( IDeviceInterface deviceInteface )
+		{
+			HyperionDevice device = new HyperionDevice( deviceInteface );
+
+			// Map device memory into the process virtual memory for peak/spectrum data.
+			device.InitializeDataBuffers();
+
+			// Enable Data Acquisition from the device
+			device.ConfigureInterrupts( Interrupts.All );
+			device.ConfigureDMA( DmaModes.All );
+
+			return device;
+		}
+
+		#endregion
 
 		#region -- Private Methods --
 
@@ -98,8 +103,8 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 		private unsafe void InitializeDataBuffers()
 		{
 			// Retrieve the Peak Data Buffer setup from the device hardware
-			PeakDmaBufferCount = _deviceInterface.ReadRegister( DeviceRegisterAddress.PeakDmaBufferCount );
-			PeakDmaBufferSizeInBytes = _deviceInterface.ReadRegister( DeviceRegisterAddress.PeakDmaBufferSizeInBytes );
+			PeakDmaBufferCount = (int) _deviceInterface.ReadRegister( DeviceRegisterAddress.PeakDmaBufferCount );
+			PeakDmaBufferSizeInBytes = (int) _deviceInterface.ReadRegister( DeviceRegisterAddress.PeakDmaBufferSizeInBytes );
 
 			// Create storage for peak data pointers
 			_PeakDataBuffers = new IntPtr[ PeakDmaBufferCount ];
@@ -109,12 +114,12 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 				// Memory Map Peak Buffers to virtual memory for this process
 				_PeakDataBuffers[ index ] = _deviceInterface.GetMemoryMappedBuffer( 
 					MMapDmaBufferOffset.Peak + index,
-					PeakDmaBufferSizeInBytes );
+					(uint) PeakDmaBufferSizeInBytes );
 			}
 
 			// Retrieve the Full Spectrum Data Buffer setup from the device hardware
-			SpectrumDmaBufferCount = _deviceInterface.ReadRegister( DeviceRegisterAddress.SpectrumDmaBufferCount );
-			SpectrumDmaBufferSizeInBytes = _deviceInterface.ReadRegister( DeviceRegisterAddress.SpectrumDmaBufferSizeInBytes );
+			SpectrumDmaBufferCount = (int) _deviceInterface.ReadRegister( DeviceRegisterAddress.SpectrumDmaBufferCount );
+			SpectrumDmaBufferSizeInBytes = (int) _deviceInterface.ReadRegister( DeviceRegisterAddress.SpectrumDmaBufferSizeInBytes );
 
 			// Create storage for peak data pointers
 			_SpectrumDataBuffers = new IntPtr[ SpectrumDmaBufferCount ];
@@ -123,8 +128,12 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 			{
 				_SpectrumDataBuffers[ index ] = _deviceInterface.GetMemoryMappedBuffer( 
 					MMapDmaBufferOffset.Spectrum + index,
-					SpectrumDmaBufferSizeInBytes );
+					(uint) SpectrumDmaBufferSizeInBytes );
 			}
+
+			// Allocate memory for responding to get peaks/spectra commands
+			_rawPeakData = new byte[ PeakDmaBufferSizeInBytes ];
+			_rawSpectrumData = new byte[ SpectrumDmaBufferSizeInBytes ];
 		}
 
 		/// <summary>
@@ -195,30 +204,40 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 			return _deviceInterface.GetDeviceDriverVersion();
 		}
 
+		/// <summary>
+		/// Gets the raw peak data.
+		/// </summary>
+		/// <returns>The raw peak data as transferred by the hardware (FPGA).</returns>
 		public byte[] GetRawPeakData()
 		{
 			// Copy the raw peak data from the mapped device memory and return to the caller.
-			IntPtr peakDataBuffer = _PeakDataBuffers[ _deviceInterface.GetNextPeakDataBufferIndex() ];
+			IntPtr peakDataBuffer = 
+				_PeakDataBuffers[ _deviceInterface.GetNextPeakDataBufferIndex() ];
 
 			Marshal.Copy(
 				peakDataBuffer,				// Source -- Shared device memory
 				_rawPeakData,				// Destination -- response
 				0,					// Offset into source
-				(int) PeakDmaBufferSizeInBytes );	// Number of bytes
+				PeakDmaBufferSizeInBytes );		// Number of bytes to copy
 
 			return _rawPeakData;
 		}
 
+		/// <summary>
+		/// Gets the raw spectrum data.
+		/// </summary>
+		/// <returns>The raw spectrum data as transferred by the hardwre (FPGA).</returns>
 		public byte[] GetRawSpectrumData()
 		{
 			// Copy the raw spectrum data from the mapped device memory and return to the caller.
-			IntPtr spectrumDataBuffer = _SpectrumDataBuffers[ _deviceInterface.GetNextSpectrumDataBufferIndex() ];
+			IntPtr spectrumDataBuffer = 
+				_SpectrumDataBuffers[ _deviceInterface.GetNextSpectrumDataBufferIndex() ];
 
 			Marshal.Copy(
 				spectrumDataBuffer,			// Source -- Shared device memory
 				_rawSpectrumData,			// Destination -- response
 				0,					// Offset into source
-				(int) SpectrumDmaBufferSizeInBytes );	// Number of bytes
+				SpectrumDmaBufferSizeInBytes );		// Number of bytes to copy
 
 			return _rawSpectrumData;
 		}
