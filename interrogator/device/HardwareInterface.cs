@@ -4,11 +4,12 @@ using Mono.Unix.Native;
 
 namespace MicronOptics.Hyperion.Interrogator.Device
 {
-	public unsafe class HardwareDevice
+	public unsafe class HardwareInterface : IDeviceInterface
 	{
 		#region -- Constants --
 
-		private const string _DevicePath = @"/dev/sm500";
+		private static readonly string _DevicePath = @"/dev/sm500";
+
 		/// <summary>
 		/// The IoctlCommand class contains the valid device driver ioctl command codes that are
 		/// supported by the hyperion interrogator.
@@ -123,24 +124,12 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 			internal static readonly uint SetMMapIndex;
 			internal static readonly uint GetSpectrumBufferIndex;
 		}
-		/// <summary>
-		/// The MMapDmaBufferOffset represents the valid offset that can be passed
-		/// to SetMMapBufferOffset command. The offsets are used when the process is initializing
-		/// the memory map between the hardware and the software process (virual memory) in which
-		/// the interface code is executing.
-		/// </summary>
-		private static class MMapDmaBufferOffset
-		{
-			internal const int Peak = 0x00000000;
-			internal const uint Spectrum = 0x80000000;
-		}
+
 		#endregion
 
 		#region -- Instance Variables --
 
 		private int _FileDescriptor;
-		private IntPtr[] _PeakDataBuffers;
-		private IntPtr[] _SpectrumDataBuffers;
 
 		#endregion
 
@@ -148,58 +137,13 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 		#region -- Constructors --
 
 		/// <summary>
-		/// All instances of HardwareDevice must be created using the static Create method
+		/// All instances of HardwareInterface must be created using the static Create method
 		/// to avoid obtaining an uninitialized and unusable instance. By making the parameterless
 		/// constructor private, the Create (which does all of the necessary initialization) 
 		/// method becomes the only way to obtain a reference to an instance.
 		/// </summary>
-		private HardwareDevice()
+		private HardwareInterface()
 		{
-		}
-
-		#endregion
-
-
-		#region -- Public Properties --
-
-		/// <summary>
-		/// Gets the raw peak data dma buffer size in bytes (specified by the hardware/FPGA).
-		/// </summary>
-		/// <value>The raw peak data dma buffer size in bytes.</value>
-		public uint PeakDmaBufferSizeInBytes
-		{
-			get;
-			private set;
-		}
-
-		/// <summary>
-		/// Gets the raw peak data dma buffer count (specified by the hardware/FPGA).
-		/// </summary>
-		/// <value>The raw peak data dma buffer count.</value>
-		public uint PeakDmaBufferCount
-		{
-			get;
-			private set;
-		}
-
-		/// <summary>
-		/// Gets the raw spectrum data dma buffer size in bytes (specified by the hardware/FPGA).
-		/// </summary>
-		/// <value>The raw spectrum data dma buffer size in bytes.</value>
-		public uint SpectrumDmaBufferSizeInBytes
-		{
-			get;
-			private set;
-		}
-
-		/// <summary>
-		/// Gets the raw spectrum data dma buffer count (specified by the hardware/FPGA).
-		/// </summary>
-		/// <value>The raw spectrum data dma buffer count.</value>
-		public uint SpectrumDmaBufferCount
-		{
-			get;
-			private set;
 		}
 
 		#endregion
@@ -208,22 +152,25 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 		#region -- External Methods --
 
 		[DllImport("libc", EntryPoint = "ioctl", SetLastError = true)]
-		static extern private int IOCTL( int fd, uint request, void* data );
+		static extern private int IOCTL_Reference( int fd, uint request, void* data );
 
 		[DllImport("libc", EntryPoint = "ioctl", SetLastError = true)]
-		static extern private int IOCTL_IN( int fd, uint request, uint data );
+		static extern private int IOCTL_Value( int fd, uint request, uint data );
 
 		#endregion
 
 		#region -- Static Methods --
 
-		public static HardwareDevice Create()
+		public static HardwareInterface Create()
 		{
-			// Attempt to create and Initialize a new HardwareDevice. By using Create
+			// Attempt to create and Initialize a new HardwareInterface. By using Create
 			// the ability to create and later attempt to use a non-functioning 
 			// instance is avoided.
-			HardwareDevice hardwareDevice = new HardwareDevice();
-			hardwareDevice.Initialize();
+			HardwareInterface hardwareDevice = new HardwareInterface();
+
+			// Attempt to open the device and, if successful, store the resulting file
+			// descriptor in the class variable.
+			hardwareDevice.Open( _DevicePath );
 
 			return hardwareDevice;
 		}
@@ -233,38 +180,12 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 		#region -- Private Methods --
 
 		/// <summary>
-		/// Open the device and initialize by mapping the driver memory into the process,
-		/// enable interrupts, start dma transfers for both peak and full spectrum data.
-		/// </summary>
-		private int Initialize()
-		{
-			// Attempt to open the device and, if successful, store the resulting file
-			// descriptor in the class variable.
-			_FileDescriptor = Open();
-
-			// Setup memory mapped data buffers
-			InitializeDataBuffers();
-
-			// Enable Interrupts
-			WriteRegister(
-				DeviceRegisterAddress.InterruptEnable, 
-				DeviceInterruptModes.Peak | DeviceInterruptModes.Spectrum );
-
-			// Enable DMA
-			WriteRegister(
-				DeviceRegisterAddress.DmaEnable, 
-				DeviceDmaModes.Peak | DeviceDmaModes.Spectrum );
-
-			return _FileDescriptor;
-		}
-
-		/// <summary>
 		/// Open the device.
 		/// </summary>
 		/// <returns>The system level file descriptor for the device.</returns> 
-		private int Open()
+		private void Open( string devicePath )
 		{
-			int fileDescriptor = Syscall.open( _DevicePath, OpenFlags.O_RDWR );
+			_FileDescriptor = Syscall.open( devicePath, OpenFlags.O_RDWR );
 
 			// Open Device File
 			if( _FileDescriptor < 0 )
@@ -273,93 +194,44 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 					"Error opening the device: " +
 					Syscall.GetLastError() );
 			}
-
-			return fileDescriptor;
-		}
-
-		/// <summary>
-		/// Initialize by opening the device and preparing the memory mapped pointers.
-		/// </summary>
-		private unsafe void InitializeDataBuffers()
-		{
-			// Retrieve the Peak Data Buffer setup from the device hardware
-			PeakDmaBufferCount = ReadRegister( DeviceRegisterAddress.PeakDmaBufferCount );
-			PeakDmaBufferSizeInBytes = ReadRegister( DeviceRegisterAddress.PeakDmaBufferSizeInBytes );
-
-			// Create storage for peak data pointers
-			_PeakDataBuffers = new IntPtr[ PeakDmaBufferCount ];
-
-			// Memory Map Peak Buffers to virtual memory for this process
-			SetMMapIndex( MMapDmaBufferOffset.Peak );
-
-			for( uint index=0; index<PeakDmaBufferCount; index++ )
-			{
-				// Use Linux MMap to map kernel memory to in-process memory addresses
-				_PeakDataBuffers[ index ] = Syscall.mmap(
-					IntPtr.Zero, 
-					PeakDmaBufferSizeInBytes,
-					MmapProts.PROT_READ,
-					MmapFlags.MAP_FILE | MmapFlags.MAP_SHARED,
-					_FileDescriptor, 
-					0 );
-
-				// Check for Error
-				if( _PeakDataBuffers[ index ] == Syscall.MAP_FAILED )
-				{
-					throw new Exception(
-						"Error creating peak data memory map: " +
-						Syscall.GetLastError() );
-				}
-			}
-
-			// Retrieve the Full Spectrum Data Buffer setup from the device hardware
-			SpectrumDmaBufferCount = ReadRegister( DeviceRegisterAddress.SpectrumDmaBufferCount );
-			SpectrumDmaBufferSizeInBytes = ReadRegister( DeviceRegisterAddress.SpectrumDmaBufferSizeInBytes );
-
-			// Create storage for peak data pointers
-			_SpectrumDataBuffers = new IntPtr[ SpectrumDmaBufferCount ];
-
-			// Memory Map Full Spectrum Buffers to virtual memory for this process
-			SetMMapIndex( MMapDmaBufferOffset.Spectrum );
-
-			for( uint index = 0; index < SpectrumDmaBufferCount; index++ )
-			{
-				// Use Linux MMap to map kernel memory to in-process memory addresses
-				_SpectrumDataBuffers[ index ] = Syscall.mmap(
-					IntPtr.Zero, 
-					SpectrumDmaBufferSizeInBytes,
-					MmapProts.PROT_READ,
-					MmapFlags.MAP_FILE | MmapFlags.MAP_SHARED,
-					_FileDescriptor, 
-					0 );
-
-				// Check for Error
-				if( _SpectrumDataBuffers[ index ] == Syscall.MAP_FAILED )
-				{
-					throw new Exception(
-						"Error creating full spectrum memory map: " +
-						Syscall.GetLastError() );
-				}
-			}
-		}
-
-		/// <summary>
-		/// Sets the index of the memory map pointer in the device driver.
-		/// </summary>
-		/// <param name="index">Index.</param>
-		private void SetMMapIndex( uint index )
-		{
-			if( IOCTL_IN( _FileDescriptor, IoctlRequestCodes.SetMMapIndex, index ) < 0 )
-			{
-				throw new Exception(
-					"Error setting mmap index: " +
-					Syscall.GetLastError() );
-			}
 		}
 
 		#endregion
 
 		#region -- Public Methods --
+
+		/// <summary>
+		/// Sets the index of the memory map pointer in the device driver.
+		/// </summary>
+		/// <param name="index">Index.</param>
+		public IntPtr GetMemoryMappedBuffer( uint index, ulong length  )
+		{
+			if( IOCTL_Value( _FileDescriptor, IoctlRequestCodes.SetMMapIndex, index ) < 0 )
+			{
+				throw new Exception(
+					"Error setting mmap index: " +
+					Syscall.GetLastError() );
+			}
+
+			// Use Linux MMap to map kernel memory to in-process memory addresses
+			IntPtr buffer = Syscall.mmap(
+				IntPtr.Zero, 
+				length,
+				MmapProts.PROT_READ,
+				MmapFlags.MAP_FILE | MmapFlags.MAP_SHARED,
+				_FileDescriptor, 
+				0 );
+
+			// Check for Error
+			if( buffer == Syscall.MAP_FAILED )
+			{
+				throw new Exception(
+					"Error creating peak data memory map: " +
+					Syscall.GetLastError() );
+			}
+
+			return buffer;
+		}
 
 		/// <summary>
 		/// Read value of the specified hardware register.
@@ -372,7 +244,7 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 			// and returns the value in the upper 32-bits.
 			ulong ioctlRegisterData = address;
 
-			if( IOCTL( _FileDescriptor, IoctlRequestCodes.ReadRegister32, &ioctlRegisterData ) < 0 )
+			if( IOCTL_Reference( _FileDescriptor, IoctlRequestCodes.ReadRegister32, &ioctlRegisterData ) < 0 )
 			{
 				throw new Exception(
 					"Error reading from device register: " +
@@ -395,7 +267,7 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 			// and returns the value in the upper 32-bits.
 			ulong ioctlRegisterData = ( (ulong) value << 32 ) + address;
 
-			if( IOCTL( _FileDescriptor, IoctlRequestCodes.WriteRegister32, &ioctlRegisterData ) < 0 )
+			if( IOCTL_Reference( _FileDescriptor, IoctlRequestCodes.WriteRegister32, &ioctlRegisterData ) < 0 )
 			{
 				throw new Exception(
 					"Error writing to device register: " +
@@ -404,63 +276,55 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 		}
 
 		/// <summary>
-		/// Gets the next available peak data buffer.
+		/// Gets the next available peak data buffer index.
 		/// </summary>
-		/// <returns>A pointer to the first byte in the most recently transferred peak data
-		/// buffer.</returns>
-		/// <param name="_FileDescriptor">_FileDescriptor.</param>
-		public IntPtr GetNextPeakDataBuffer()
+		/// <returns>The index of the most recently transferred peak data buffer.</returns>
+		public uint GetNextPeakDataBufferIndex()
 		{
 			// The GetPeakBufferIndex returns the index of the pointer that
 			// was most recently refreshed by the device hardware.
 			uint index;
 
-			if( IOCTL( _FileDescriptor, IoctlRequestCodes.GetPeakBufferIndex, &index ) < 0 )
+			if( IOCTL_Reference( _FileDescriptor, IoctlRequestCodes.GetPeakBufferIndex, &index ) < 0 )
 			{
 				throw new Exception(
 					"Error retrieving next peak buffer: " +
 					Syscall.GetLastError() );
 			}
 
-			// Return the buffer pointer...not the index...so that external callers
-			// do not need any knowledge of the array of buffers.
-			return _PeakDataBuffers[ index ];
+			return index;
 		}
 
 		/// <summary>
-		/// Gets the next available full spectrum data buffer.
+		/// Gets the next available full spectrum data buffer index.
 		/// </summary>
-		/// <returns>A pointer to the first byte in the most recently transferred full spectrum 
-		/// data buffer.</returns>
-		/// <param name="_FileDescriptor">_FileDescriptor.</param>
-		public IntPtr GetNexSpectrumDataBuffer()
+		/// <returns>The index of the most recently transferred full spectrum data buffer.</returns>
+		public uint GetNextSpectrumDataBufferIndex()
 		{
 			// The GetSpectrumBufferIndex returns the index of the pointer that
 			// was most recently refreshed by the device hardware.
 			uint index;
 
-			if( IOCTL( _FileDescriptor, IoctlRequestCodes.GetSpectrumBufferIndex, &index ) < 0 )
+			if( IOCTL_Reference( _FileDescriptor, IoctlRequestCodes.GetSpectrumBufferIndex, &index ) < 0 )
 			{
 				throw new Exception(
 					"Error retrieving next spectrum buffer: " +
 					Syscall.GetLastError() );
 			}
 
-			// Return the buffer pointer...not the index...so that external callers
-			// do not need any knowledge of the array of buffers.
-			return _SpectrumDataBuffers[ index ];
+			return index;
 		}
 
 		/// <summary>
 		/// Gets the device driver version.
 		/// </summary>
 		/// <returns>The device driver version.</returns>
-		public uint GetDriverVersion()
+		public uint GetDeviceDriverVersion()
 		{
 			uint version;
 
 			// Driver Version
-			if( IOCTL( _FileDescriptor, IoctlRequestCodes.GetDriverVersion, &version ) < 0 )
+			if( IOCTL_Reference( _FileDescriptor, IoctlRequestCodes.GetDriverVersion, &version ) < 0 )
 			{
 				throw new Exception(
 					"Error retrieving device driver version: " +
@@ -477,16 +341,6 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 		/// </summary>
 		public void Close()
 		{
-			// Disable Interrupts
-			WriteRegister(
-				DeviceRegisterAddress.InterruptEnable, 
-				DeviceInterruptModes.Off );
-
-			// Disable DMA
-			WriteRegister(
-				DeviceRegisterAddress.DmaEnable, 
-				DeviceDmaModes.Off );
-
 			// Close
 			if( Syscall.close( _FileDescriptor ) < 0 )
 			{
