@@ -31,39 +31,35 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 			#region -- Create and Initialize Command Manager --
 
 			// Create a new command manager to receive and process incoming requests.
-			CommandManager commandManager = CommandManager.GetInstance();
+			TcpCommandServer commandManager = TcpCommandServer.GetInstance();
 
-			commandManager.AddCommandHandler( 
-			                   new EnlightCommand( 
+			commandManager.AddCommand( 
 			                   "#ReadRegister",
 			                   "Read the specified device register address.",
 			                   false,
 			                   false,
-			                   new EnlightCommandDelegate( ReadRegister ) ) );
+			                   new ServerCommandDelegate( ReadRegister ) );
 
-			commandManager.AddCommandHandler( 
-			                   new EnlightCommand( 
+			commandManager.AddCommand( 
 			                   "#WriteRegister",
 			                   "Write value to the specified device register address.",
 			                   false,
 			                   false,
-			                   new EnlightCommandDelegate( WriteRegister ) ) );
+			                   new ServerCommandDelegate( WriteRegister ) );
 
-			commandManager.AddCommandHandler( 
-			                   new EnlightCommand( 
+			commandManager.AddCommand( 
 			                   "#GetRawPeaks",
 			                   "Get the raw (as transferred from the FPGA) peak data.",
 			                   false,
 			                   false,
-			                   new EnlightCommandDelegate( GetRawPeaks ) ) );
+			                   new ServerCommandDelegate( GetRawPeaks ) );
 
-			commandManager.AddCommandHandler( 
-			                   new EnlightCommand( 
+			commandManager.AddCommand( 
 			                   "#GetRawSpectra",
 			                   "Get the raw (as transferred from the FPGA) reflected optical spectrum data.",
 			                   false,
 			                   false,
-			                   new EnlightCommandDelegate( GetRawSpectra ) ) );
+			                   new ServerCommandDelegate( GetRawSpectra ) );
 
 			// Recieve and process incoming commands
 			commandManager.Start();
@@ -112,7 +108,7 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 		/// <returns>A status that indicates how the command exited.</returns>
 		/// <param name="commandFields">Command fields.</param>
 		/// <param name="responseBytes">The value stored in the register (as a hexadecimal string).</param>
-		private static CommandStatus ReadRegister( string[] commandFields, out byte[] responseBytes )
+		private static CommandExitStatus ReadRegister( string[] commandFields, out byte[] responseBytes )
 		{
 			try
 			{
@@ -127,14 +123,14 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 				// Response
 				responseBytes = ASCIIEncoding.ASCII.GetBytes( "0x" + val.ToString( "X8" ) );
 
-				return CommandStatus.Success;
+				return CommandExitStatus.Success;
 			}
 			catch( Exception ex )
 			{
 				// Return exception message
 				responseBytes = ASCIIEncoding.ASCII.GetBytes( ex.Message );
 
-				return CommandStatus.ErrorProcessing;
+				return CommandExitStatus.ErrorProcessing;
 			}
 		}
 
@@ -144,7 +140,7 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 		/// <returns>A status that indicates how the command exited.</returns>
 		/// <param name="commandFields">Command fields.</param>
 		/// <param name="responseBytes">Response bytes.</param>
-		private static CommandStatus WriteRegister( string[] commandFields, out byte[] responseBytes )
+		private static CommandExitStatus WriteRegister( string[] commandFields, out byte[] responseBytes )
 		{
 			try
 			{
@@ -160,14 +156,14 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 				// Response
 				responseBytes = ASCIIEncoding.ASCII.GetBytes( "SUCCESS" );
 
-				return CommandStatus.Success;
+				return CommandExitStatus.Success;
 			}
 			catch( Exception ex )
 			{
 				// Return exception message
 				responseBytes = ASCIIEncoding.ASCII.GetBytes( ex.Message );
 
-				return CommandStatus.ErrorProcessing;
+				return CommandExitStatus.ErrorProcessing;
 			}
 		}
 
@@ -177,29 +173,29 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 		/// <returns>A status that indicates how the command exited.</returns>
 		/// <param name="commandFields">Command fields.</param>
 		/// <param name="responseBytes">Response bytes.</param>
-		private static unsafe CommandStatus GetRawPeaks( string[] commandFields, out byte[] responseBytes )
+		private static unsafe CommandExitStatus GetRawPeaks( string[] commandFields, out byte[] responseBytes )
 		{
 			try
 			{
 				// Copy the raw peak data from the mapped device memory and return to the caller.
 				Marshal.Copy(
-					_Device.GetNextPeakDataBuffer(),			// Source -- Shared device memory
+					_Device.GetNextPeakDataBuffer(),		// Source -- Shared device memory
 				        _RawPeakData,					// Destination -- response
 					0,						// Offset into source
-				        (int) _Device.PeakDmaBufferSizeInBytes );	// Number of 
+				        (int) _Device.PeakDmaBufferSizeInBytes );	// Number of bytes
 
 				// Point the response at the copied data
 				responseBytes = _RawPeakData; 
 
 				// Wahoo...it freaking worked...
-				return CommandStatus.Success;
+				return CommandExitStatus.Success;
 			}
 			catch( Exception ex )
 			{
 				// Return exception message
 				responseBytes = ASCIIEncoding.ASCII.GetBytes( ex.Message );
 
-				return CommandStatus.ErrorProcessing;
+				return CommandExitStatus.ErrorProcessing;
 			}
 		}
 
@@ -209,7 +205,7 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 		/// <returns>A status that indicates how the command exited.</returns>
 		/// <param name="commandFields">Command fields.</param>
 		/// <param name="responseBytes">Response bytes.</param>
-		private static unsafe CommandStatus GetRawSpectra( string[] commandFields, out byte[] responseBytes )
+		private static unsafe CommandExitStatus GetRawSpectra( string[] commandFields, out byte[] responseBytes )
 		{
 			try
 			{
@@ -218,20 +214,20 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 					_Device.GetNexSpectrumDataBuffer(),		// Source -- Shared device memory
 					_RawSpectrumData,				// Destination -- response
 					0,						// Offset into source
-					(int) _Device.SpectrumDmaBufferSizeInBytes );	// Number of 
+					(int) _Device.SpectrumDmaBufferSizeInBytes );	// Number of bytes
 
 				// Point the response at the copied data
 				responseBytes = _RawSpectrumData; 
 
 				// Wahoo...it freaking worked...
-				return CommandStatus.Success;
+				return CommandExitStatus.Success;
 			}
 			catch( Exception ex )
 			{
 				// Return exception message
 				responseBytes = ASCIIEncoding.ASCII.GetBytes( ex.Message );
 
-				return CommandStatus.ErrorProcessing;
+				return CommandExitStatus.ErrorProcessing;
 			}
 		}
 	}
