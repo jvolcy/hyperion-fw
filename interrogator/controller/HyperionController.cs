@@ -1,90 +1,57 @@
 using System;
 using System.Text;
-using System.Runtime.InteropServices;
+
 
 using MicronOptics.Hyperion.Interrogator.Device;
+using MicronOptics.Hyperion.Interrogator.Server;
 
-namespace MicronOptics.Hyperion.Interrogator.Server
+
+namespace MicronOptics.Hyperion.Interrogator.Controller
 {
-	class MainClass
+	public class HyperionController
 	{
-		private static HyperionDevice _hyperion = null;
+		#region -- Instance Variables --
 
-		public static void Main( string[] args )
+		HyperionDevice _hyperion;
+
+		#endregion
+
+
+		#region -- Constructors --
+
+		private HyperionController( HyperionDevice hyperion )
 		{
-			// A HardwareDevice provides communication to the device FPGA
-			// through a kernel device driver.
-			using( _hyperion = new HyperionDevice( HardwareInterface.Create() ) )
-			{
-				#region -- Create and Initialize Command Manager --
-
-				// Create a new command manager to receive and process incoming requests.
-				TcpCommandServer commandManager = TcpCommandServer.GetInstance();
-
-				commandManager.AddCommand( 
-					"#ReadRegister",
-					"Read the specified device register address.",
-					false,
-					false,
-					new ServerCommandDelegate( ReadRegister ) );
-
-				commandManager.AddCommand( 
-					"#WriteRegister",
-					"Write value to the specified device register address.",
-					false,
-					false,
-					new ServerCommandDelegate( WriteRegister ) );
-
-				commandManager.AddCommand( 
-					"#GetRawPeaks",
-					"Get the raw (as transferred from the FPGA) peak data.",
-					false,
-					false,
-					new ServerCommandDelegate( GetRawPeaks ) );
-
-				commandManager.AddCommand( 
-					"#GetRawSpectra",
-					"Get the raw (as transferred from the FPGA) reflected optical spectrum data.",
-					false,
-					false,
-					new ServerCommandDelegate( GetRawSpectra ) );
-
-				// Recieve and process incoming commands
-				commandManager.Start();
-
-				#endregion
-
-				#region -- Display FPGA and Driver Info --
-
-				// Provide an easy sign that the communication with the device
-				// is functioning
-				Console.WriteLine( string.Format( "  FPGA Version: {0}",
-				ASCIIEncoding.ASCII.GetString( BitConverter.GetBytes( _hyperion.GetFpgaVersion() ) ) ) );
-
-				// Provide an easy sign that the communication with the device
-				// is functioning
-				Console.WriteLine( string.Format( "Driver Version: {0}",
-				_hyperion.GetDeviceDriverVersion() ) );
-
-				Console.WriteLine( "----------------------" );
-
-				#endregion
-
-				// Wait for user input to exit gracefully 
-				Console.ReadLine();
-
-				// Before exiting, propertly shutdown the device to allow for easy
-				// start and stop debugging (no reboot ).
-				commandManager.Stop();
-			}
+			_hyperion = hyperion;
 		}
+
+		#endregion
+
+
+		#region -- Static Methods --
+
+		public static HyperionController Create( HyperionDevice device, params  ICommandServer[] servers )
+		{
+			HyperionController controller = new HyperionController( device );
+
+			// Connect each of the command servers to the controller
+			foreach ( ICommandServer server in servers )
+			{
+				controller.ConnectCommandServer( server );
+			}
+
+			return controller;
+		}
+
+		#endregion
+		
+		#region -- Private Methods --
 
 		/// <summary>
 		/// Gets the decimal or hexidecimal value of a string.
 		/// </summary>
 		/// <returns>The decimal or hexidecimal value that the string represents.</returns>
 		/// <param name="valueAsString">Hexadecimal string to be converted.</param>
-		private static uint GetDecimalOrHexidecimalValueFromString( string valueAsString )
+		private uint GetDecimalOrHexidecimalValueFromString( string valueAsString )
 		{
 			return 	Convert.ToUInt32( valueAsString, 
 			                         valueAsString.ToLower().Contains("0x") ? 16 : 10 );
@@ -96,7 +63,7 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 		/// <returns>A status that indicates how the command exited.</returns>
 		/// <param name="commandFields">Command fields.</param>
 		/// <param name="responseBytes">The value stored in the register (as a hexadecimal string).</param>
-		private static CommandExitStatus ReadRegister( string[] commandFields, out byte[] responseBytes )
+		private CommandExitStatus ReadRegister( string[] commandFields, out byte[] responseBytes )
 		{
 			try
 			{
@@ -128,7 +95,7 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 		/// <returns>A status that indicates how the command exited.</returns>
 		/// <param name="commandFields">Command fields.</param>
 		/// <param name="responseBytes">Response bytes.</param>
-		private static CommandExitStatus WriteRegister( string[] commandFields, out byte[] responseBytes )
+		private CommandExitStatus WriteRegister( string[] commandFields, out byte[] responseBytes )
 		{
 			try
 			{
@@ -161,12 +128,16 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 		/// <returns>A status that indicates how the command exited.</returns>
 		/// <param name="commandFields">Command fields.</param>
 		/// <param name="responseBytes">Response bytes.</param>
-		private static unsafe CommandExitStatus GetRawPeaks( string[] commandFields, out byte[] responseBytes )
+		private CommandExitStatus GetRawPeaks( string[] commandFields, out byte[] responseBytes )
 		{
 			try
 			{
 				// Point the response at the copied data
-				responseBytes = _hyperion.GetRawPeakData();; 
+				responseBytes = _hyperion.GetRawPeakData();
+
+				// Display
+				Console.WriteLine( string.Format( "{0}: --> Get Raw Peaks returned {1} bytes",
+				                                 DateTime.Now.ToLongTimeString(), responseBytes.Length ) );
 
 				// Wahoo...it freaking worked...
 				return CommandExitStatus.Success;
@@ -186,13 +157,16 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 		/// <returns>A status that indicates how the command exited.</returns>
 		/// <param name="commandFields">Command fields.</param>
 		/// <param name="responseBytes">Response bytes.</param>
-		private static unsafe CommandExitStatus GetRawSpectra( string[] commandFields, out byte[] responseBytes )
+		private CommandExitStatus GetRawSpectra( string[] commandFields, out byte[] responseBytes )
 		{
 			try
 			{
 				// Point the response at the copied data
 				responseBytes = _hyperion.GetRawSpectrumData(); 
 
+				// Display
+				Console.WriteLine( string.Format( "{0}: ----> Get Raw Spectra returned {1} bytes",
+				                                 DateTime.Now.ToLongTimeString(), responseBytes.Length ) );
 				// Wahoo...it freaking worked...
 				return CommandExitStatus.Success;
 			}
@@ -204,5 +178,47 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 				return CommandExitStatus.ErrorProcessing;
 			}
 		}
+
+		#endregion
+
+		#region -- Public Methods --
+
+		/// <summary>
+		/// Connect the command server to the Hyperion Device specific functions.
+		/// </summary>
+		/// <param name="commandServer">Command server processing Hyperion Device remote commands.</param>
+		private void ConnectCommandServer( ICommandServer commandServer )
+		{
+			commandServer.AddCommand( 
+			                          "#ReadRegister",
+			                          "Read the specified device register address.",
+			                          false,
+			                          false,
+			                          new ServerCommandDelegate( ReadRegister ) );
+
+			commandServer.AddCommand( 
+			                          "#WriteRegister",
+			                          "Write value to the specified device register address.",
+			                          false,
+			                          false,
+			                          new ServerCommandDelegate( WriteRegister ) );
+
+			commandServer.AddCommand( 
+			                          "#GetRawPeaks",
+			                          "Get the raw (as transferred from the FPGA) peak data.",
+			                          false,
+			                          false,
+			                          new ServerCommandDelegate( GetRawPeaks ) );
+
+			commandServer.AddCommand( 
+			                          "#GetRawSpectra",
+			                          "Get the raw (as transferred from the FPGA) reflected optical spectrum data.",
+			                          false,
+			                          false,
+			                          new ServerCommandDelegate( GetRawSpectra ) );
+		}
+
+		#endregion
 	}
 }
+

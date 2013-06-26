@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "server", "server\server.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "core", "core\core.csproj", "{41CC4815-AD98-4F97-8D92-FEE9F58E8491}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "controller", "controller\controller.csproj", "{D9830026-80F3-48D7-8BA6-C1D00C342CC8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "console", "console\console.csproj", "{AD405EFA-D036-41D2-976D-22688E08EC2C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,13 +25,21 @@ Global
 		{9162D414-B022-4555-BB5E-8334691D615F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9162D414-B022-4555-BB5E-8334691D615F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9162D414-B022-4555-BB5E-8334691D615F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AD405EFA-D036-41D2-976D-22688E08EC2C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD405EFA-D036-41D2-976D-22688E08EC2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD405EFA-D036-41D2-976D-22688E08EC2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD405EFA-D036-41D2-976D-22688E08EC2C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D9830026-80F3-48D7-8BA6-C1D00C342CC8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D9830026-80F3-48D7-8BA6-C1D00C342CC8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9830026-80F3-48D7-8BA6-C1D00C342CC8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D9830026-80F3-48D7-8BA6-C1D00C342CC8}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DC47A850-CD23-4E77-A09B-F35A4EB53593}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DC47A850-CD23-4E77-A09B-F35A4EB53593}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DC47A850-CD23-4E77-A09B-F35A4EB53593}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DC47A850-CD23-4E77-A09B-F35A4EB53593}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
-		StartupItem = server\server.csproj
+		StartupItem = console\console.csproj
 		Policies = $0
 		$0.TextStylePolicy = $1
 		$1.inheritsSet = Mono

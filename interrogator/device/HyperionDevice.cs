@@ -79,6 +79,11 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 
 		#region -- Static Methods --
 
+		/// <summary>
+		/// Create a new Hyperion Device, initialize the peak/spectrum memory data buffers,
+		/// enable interrupts, and enable DMA.
+		/// </summary>
+		/// <param name="deviceInteface">The interface for communicating with the device hardware.</param>
 		public static HyperionDevice Create( IDeviceInterface deviceInteface )
 		{
 			HyperionDevice device = new HyperionDevice( deviceInteface );
@@ -100,7 +105,7 @@ namespace MicronOptics.Hyperion.Interrogator.Device
 		/// <summary>
 		/// Map the peak/spectrum device data into the process virtual memory.
 		/// </summary>
-		private unsafe void InitializeDataBuffers()
+		private void InitializeDataBuffers()
 		{
 			// Retrieve the Peak Data Buffer setup from the device hardware
 			PeakDmaBufferCount = (int) _deviceInterface.ReadRegister( DeviceRegisterAddress.PeakDmaBufferCount );

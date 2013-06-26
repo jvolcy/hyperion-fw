@@ -14,7 +14,7 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 	}
 
 	/// <summary>
-	/// Represents the status of the issued command. A non-zero status indicates an error.
+	/// Represents the exit status of an issued command. A non-zero status indicates an error.
 	/// </summary>
 	public enum CommandExitStatus : byte
 	{

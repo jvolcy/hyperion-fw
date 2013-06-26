@@ -10,13 +10,13 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 	{
 		#region -- Instance Attributes --
 
-		private ServerCommandDelegate mCommandDelegate;
+		private ServerCommandDelegate _commandDelegate;
 
-		private string _Name;
-		private string _Description;
+		private string _name;
+		private string _description;
 
-		private bool _PasswordRequired;
-		private bool _HideHelpText;
+		private bool _passwordRequired;
+		private bool _hideHelpText;
 
 		#endregion
 
@@ -35,12 +35,12 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 		internal ServerCommand( string name, string description, bool passwordRequired, bool hideHelpText,
 			ServerCommandDelegate commandDelegate )
 		{
-			this._Name = name;
-			this._Description = description;
-			this._PasswordRequired = passwordRequired;
-			this._HideHelpText = hideHelpText;
+			this._name = name;
+			this._description = description;
+			this._passwordRequired = passwordRequired;
+			this._hideHelpText = hideHelpText;
 
-			this.mCommandDelegate = commandDelegate;
+			this._commandDelegate = commandDelegate;
 		}
 
 		#endregion
@@ -53,7 +53,7 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 		/// </summary>
 		internal string Name
 		{
-			get { return this._Name; }
+			get { return this._name; }
 		}
 
 		/// <summary>
@@ -61,7 +61,7 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 		/// </summary>
 		internal string Description
 		{
-			get { return this._Description; }
+			get { return this._description; }
 		}
 
 		/// <summary>
@@ -69,7 +69,7 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 		/// </summary>
 		internal bool PasswordRequired
 		{
-			get { return this._PasswordRequired; }
+			get { return this._passwordRequired; }
 		}
 
 		/// <summary>
@@ -77,7 +77,7 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 		/// </summary>
 		internal bool HideHelpText
 		{
-			get { return this._HideHelpText; }
+			get { return this._hideHelpText; }
 		}
 
 		/// <summary>
@@ -85,7 +85,7 @@ namespace MicronOptics.Hyperion.Interrogator.Server
 		/// </summary>
 		internal ServerCommandDelegate CommandDelegate
 		{
-			get { return this.mCommandDelegate; }
+			get { return this._commandDelegate; }
 		}
 
 		#endregion

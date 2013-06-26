@@ -5,10 +5,10 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>10.0.0</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{DC47A850-CD23-4E77-A09B-F35A4EB53593}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <RootNamespace>MicronOptics.Hyperion.Interrogator.Server</RootNamespace>
-    <AssemblyName>server</AssemblyName>
+    <ProjectGuid>{AD405EFA-D036-41D2-976D-22688E08EC2C}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>MicronOptics.Hyperion.Interrogator.Controller</RootNamespace>
+    <AssemblyName>console</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -31,21 +31,26 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="_Enum.cs" />
-    <Compile Include="TcpCommandServer.cs" />
-    <Compile Include="ServerCommand.cs" />
-    <Compile Include="ICommandServer.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <ProjectReference Include="..\device\device.csproj">
-      <Project>{9162D414-B022-4555-BB5E-8334691D615F}</Project>
-      <Name>device</Name>
+    <ProjectReference Include="..\controller\controller.csproj">
+      <Project>{D9830026-80F3-48D7-8BA6-C1D00C342CC8}</Project>
+      <Name>controller</Name>
     </ProjectReference>
     <ProjectReference Include="..\core\core.csproj">
       <Project>{41CC4815-AD98-4F97-8D92-FEE9F58E8491}</Project>
       <Name>core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\device\device.csproj">
+      <Project>{9162D414-B022-4555-BB5E-8334691D615F}</Project>
+      <Name>device</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\server\server.csproj">
+      <Project>{DC47A850-CD23-4E77-A09B-F35A4EB53593}</Project>
+      <Name>server</Name>
     </ProjectReference>
   </ItemGroup>
 </Project>
